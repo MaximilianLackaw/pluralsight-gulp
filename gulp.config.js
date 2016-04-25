@@ -5,7 +5,10 @@ module.exports = function() {
 
 	var temp = './.tmp/';
 
-	var config = {		
+	var config = {
+		/**
+		 * Files paths
+		 */	
 		alljs: [
 			'./src/**/*.js',
 			'./*.js'
@@ -21,12 +24,21 @@ module.exports = function() {
 		less: client + 'styles/styles.less',
 		server: server,
 		temp: temp,
+
+		/**
+		 * browser sync
+		 */
+		browserReloadDelay: 1000,
+
+		/**
+		 * Bower and NPM locations
+		 */
 		bower: {
 			json: require('./bower.json'),
 			directory: './bower_components/',
 			ignorePath: '../..'
 		},
-		defaultPort: 7203,
+		defaultPort: 3000,
 		nodeServer: server + '/app.js'
 	};
 
