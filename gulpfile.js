@@ -3,6 +3,8 @@ var args        = require('yargs').argv;
 var browserSync = require('browser-sync');
 var config      = require('./gulp.config')();
 var del         = require('del');
+var path        = require('path');
+var _           = require('lodash');
 var port        = process.env.PORT || config.defaultPort;
 
 var $           = require('gulp-load-plugins')({lazy: true});
@@ -113,7 +115,20 @@ gulp.task('inject', ['wiredep', 'styles', 'templatecache'], function() {
         .pipe(gulp.dest(config.client));
 });
 
-gulp.task('optimize', ['inject'], function() {
+gulp.task('build', ['optimize', 'images', 'fonts'], function() {
+    log('Building everything');
+
+    var msg = {
+        title: 'gulp build',
+        subtitle: 'Deployed to the build folder',
+        message: 'Running `gulp serve-build`'
+    };
+    del(config.temp);
+    log(msg);
+    notify(msg);
+});
+
+gulp.task('optimize', ['inject', 'test'], function() {
     log('Optimizing the javascript, css, html');
 
     var templateCache = config.temp + config.templateCache.file;
@@ -165,6 +180,14 @@ gulp.task('serve-dev', ['inject'], function() {
     serve(true);
 });
 
+gulp.task('test', ['vet', 'templatecache'], function(done){
+    startTests(true, done);
+});
+
+gulp.task('autotest', ['vet', 'templatecache'], function(done){
+    startTests(false, done);
+});
+
 ////////////////
 
 function serve(isDev) {
@@ -202,6 +225,17 @@ function serve(isDev) {
 function changeEvent(event) {
     var srcPattern = new RegExp('./.*(?=/' + config.source + ')/');
     log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
+}
+
+function notify(options) {
+    var notifier = require('node-notifier');
+    var notifyOptions = {
+        sound: 'Bottle',
+        contentImage: path.join(__dirname, 'gulp.png'),
+        icon: path.join(__dirname, 'gulp.png')
+    };
+    _.assign(notifyOptions.options);
+    notifier.notify(notifyOptions);
 }
 
 function startBrowserSync(isDev) {
@@ -249,6 +283,28 @@ function errorLogger(error) {
     log(error);
     log('*** End of Error ***');
     this.emit('end');
+}
+
+function startTests(singleRun, done) {
+    var Karma = require('karma').Server;
+    var excludeFiles = [];
+    var serverSpecs = config.serverIntegrationSpecs;
+
+    excludeFiles = serverSpecs;
+
+    new Karma({
+        configFile: __dirname + '/karma.conf.js',
+        exclude: excludeFiles,
+        singleRun: !!singleRun
+    },
+    function(karmaResult) {
+        log('Karma completed!');
+        if (karmaResult === 1) {
+            done('karma: tests failed with code ' + karmaResult);
+        } else {
+            done();
+        }
+    }).start();
 }
 
 function clean(path, done) {

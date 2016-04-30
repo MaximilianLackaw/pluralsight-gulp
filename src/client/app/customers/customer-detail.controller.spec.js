@@ -1,5 +1,5 @@
 /* jshint -W117, -W030 */
-describe('app.customers', function() {
+xdescribe('app.customers', function() {
     var controller;
     var customers = mockData.getMockCustomers();
     var id = mockData.blackWidow.id;
